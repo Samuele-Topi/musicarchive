@@ -1,6 +1,7 @@
 {
   "name": "musicarchive",
   "version": "0.1.0",
+  "description": "A personal, aesthetic music archive built with Next.js, Tailwind CSS, and Prisma.",
   "private": true,
   "scripts": {
     "dev": "next dev",
