@@ -71,7 +71,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (currentTrack && audioRef.current) {
-      audioRef.current.src = currentTrack.fileUrl;
+      // Encode the URL to handle spaces and special characters in file paths
+      audioRef.current.src = encodeURI(currentTrack.fileUrl);
       audioRef.current.play().then(() => setIsPlaying(true)).catch(e => console.error("Playback failed", e));
     }
   }, [currentTrack]);
