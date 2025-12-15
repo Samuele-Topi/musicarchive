@@ -1,70 +1,81 @@
-# Music Archive
+# 🎶 Music Archive 🎶
 
-A personal, aesthetic music archive built with Next.js, Tailwind CSS, and Prisma.
+_Your personal, aesthetic, and perfectly organized music haven._
 
-## Features
+Built with the modern web stack: Next.js 🚀, Tailwind CSS ✨, and Prisma 🐘.
 
-- **Sync Library**: Automatically scan your local `public/music` folder to populate the database.
-- **Upload**: Drag and drop MP3 files to add them to your library. Files are automatically organized into `public/music/Artist/Album/`.
-- **Metadata-Driven**: Cover art and track info are read directly from MP3 ID3 tags.
-- **Library**: Browse albums in a beautiful grid layout or switch to Track/Artist views.
-- **Player**: Persistent global music player with queue management.
-- **Search**: Filter by artist, album, or track name.
+## ✨ Features
 
-## Setup
+- **📂 Smart Library Sync**: Automatically scans your local `public/music` folder and populates your database. No more manual track entry!
+- **⬆️ Effortless Uploads**: Drag & drop MP3 files, and watch them organize themselves into `public/music/{Artist}/{Album}/`.
+- **🖼️ Rich Metadata & Dynamic Covers**: All cover art and track details are read directly from your MP3s' ID3 tags. Beautifully displayed, no extra files!
+- **🌐 Intuitive Browsing**: Explore your collection in a gorgeous album grid, or switch to detailed track and artist views.
+- **▶️ Seamless Playback**: A persistent global player with queue management keeps the music flowing.
+- **🔍 Quick Search**: Find your favorite tunes by artist, album, or track name in an instant.
 
-1.  **Install dependencies**:
+## 🚀 Getting Started
+
+Setting up your personal music sanctuary is easy!
+
+1.  **Dependencies Installation**:
     ```bash
     npm install
     ```
 
-2.  **Initialize Database**:
+2.  **Database Initialization**:
     ```bash
     npx prisma migrate dev
     ```
 
-3.  **Configure Music Folder**:
-    - The app looks for music in `public/music`.
-    - **Recommended**: Create a junction/symlink to your existing music library:
-      ```powershell
-      # PowerShell (Admin)
-      New-Item -ItemType Junction -Path "public/music" -Target "C:\Path\To\Your\Music"
-      ```
+3.  **Music Folder Configuration**:
+    -   Your music library lives in `public/music`.
+    -   **Pro Tip**: For a clean setup and to save disk space, create a symbolic link (junction on Windows) to your existing music collection:
+        ```powershell
+        # On Windows (Run as Administrator)
+        New-Item -ItemType Junction -Path "public/music" -Target "C:\Path\To\Your\Massive\Music\Collection"
+        ```
+        ```bash
+        # On macOS/Linux
+        ln -s /path/to/your/music/collection public/music
+        ```
+        *(Replace `C:\Path\To\Your\Massive\Music\Collection` or `/path/to/your/music/collection` with your actual music folder path.)*
 
-4.  **Run Development Server**:
+4.  **Launch Development Server**:
     ```bash
     npm run dev
     ```
 
-5.  **Open Browser**:
-    Go to `http://localhost:3000`.
+5.  **Open in Browser**:
+    Your musical journey begins at `http://localhost:3000`.
 
-## Usage
+## ⚙️ Usage
 
-### Syncing Existing Music
-1.  Ensure your music files are accessible in `public/music` (via copy or symlink).
-2.  Log in (if authentication is enabled).
-3.  Click the **Sync** button (refresh icon) next to the search bar.
-4.  The app will scan recursively and add new tracks to the database.
+### Synchronizing Your Existing Library
+1.  Ensure your MP3s are correctly linked or copied into `public/music`.
+2.  **Authenticate**: Log in to access administrative features.
+3.  Click the **Sync** button (🔄 icon) next to the search bar.
+4.  Watch as your entire collection is magically added to the database!
 
-### Uploading New Music
-1.  Navigate to the `/upload` page.
-2.  Drag and drop MP3 files.
-3.  Files are automatically renamed and moved to `public/music/{Artist}/{Album}/{Title}.mp3`.
+### Uploading New Tracks
+1.  Navigate to the dedicated `/upload` page.
+2.  **Authenticate**: Log in to upload new files.
+3.  Simply drag and drop your MP3s. They will be automatically organized and stored.
 
-## Architecture
+### Managing Artist Images
+-   **Authenticated users** can upload artist images directly from the artist's page by hovering over the placeholder/existing image and clicking the camera icon.
 
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS v4
-- **Database**: SQLite with Prisma ORM
-- **Audio**: HTML5 Audio API via Custom React Hook
-- **File Storage**:
-    - Music: `public/music` (Organized by Artist/Album)
-    - Artist Images: `public/uploads/artists`
-    - Album Covers: Served dynamically from MP3 metadata (no separate files).
+## 🏗️ Architecture Under the Hood
 
-## Notes
+-   **Frontend Framework**: Next.js 15 (App Router)
+-   **Styling**: Tailwind CSS v4 for a sleek, modern look.
+-   **Database**: SQLite for simplicity and speed, powered by Prisma ORM.
+-   **Audio Playback**: Robust HTML5 Audio API via a custom React Hook.
+-   **File Storage**:
+    -   Music files reside in `public/music` (organized by Artist/Album).
+    -   Artist profile images are stored in `public/uploads/artists`.
+    -   Album covers are **dynamically extracted** from your MP3 files' ID3 tags – no redundant image files!
 
-- **Git & Backup**:
-    - `public/music` and `public/uploads` are **ignored** by Git to keep the repo light.
-    - Your actual music files stay on your disk (or linked location).
+## ⚠️ Important Notes
+
+-   **Authentication is Key**: Actions like uploading music, syncing the library, and managing artist images require user authentication. This ensures your library remains personal and secure.
+-   **Git & Storage**: Your `public/music` (the actual MP3s) and `public/uploads` (artist images) directories are **ignored by Git**. This keeps your repository lightweight and prevents accidental pushes of large media files. Your precious music stays exactly where you want it!
