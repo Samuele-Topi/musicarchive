@@ -70,11 +70,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [volume]);
 
   useEffect(() => {
-    if (currentTrack && audioRef.current) {
-      // Encode the URL to handle spaces and special characters in file paths
-      audioRef.current.src = encodeURI(currentTrack.fileUrl);
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(e => console.error("Playback failed", e));
-    }
+    const playAudio = async () => {
+      if (currentTrack && audioRef.current) {
+        try {
+          audioRef.current.src = encodeURI(currentTrack.fileUrl);
+          await audioRef.current.play();
+          setIsPlaying(true);
+        } catch (error: any) {
+          // Ignore AbortError as it means playback was interrupted by a new load
+          if (error.name !== 'AbortError') {
+             console.error("Playback failed", error);
+          }
+        }
+      }
+    };
+
+    playAudio();
   }, [currentTrack]);
 
   useEffect(() => {

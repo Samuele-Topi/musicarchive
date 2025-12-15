@@ -12,10 +12,15 @@ export default function AlbumGrid({ albums }: { albums: AlbumWithTracks[] }) {
   const { playTrack, setQueue } = usePlayer();
 
   const handlePlayAlbum = (e: React.MouseEvent, album: AlbumWithTracks) => {
-    e.preventDefault(); // Prevent navigation when clicking play
+    e.preventDefault(); 
     if (album.tracks.length > 0) {
-      setQueue(album.tracks);
-      playTrack(album.tracks[0]);
+      // Inject coverUrl from album to tracks
+      const tracksWithCover = album.tracks.map(t => ({
+        ...t,
+        coverUrl: album.coverUrl
+      }));
+      setQueue(tracksWithCover);
+      playTrack(tracksWithCover[0]);
     }
   };
 
