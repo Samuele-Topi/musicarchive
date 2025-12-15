@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import LibraryView from '@/components/LibraryView';
+import { auth } from '@/auth';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic'; // Ensure we always get fresh data
 
 export default async function Home() {
+  const session = await auth();
   const [albums, artistInfos] = await Promise.all([
     prisma.album.findMany({
       include: {
@@ -25,12 +28,20 @@ export default async function Home() {
            <h1 className="text-3xl font-bold tracking-tight">Library</h1>
            <p className="text-zinc-500">Your personal music archive.</p>
         </div>
-        <a href="/upload" className="text-sm font-medium hover:underline text-zinc-500 hover:text-black dark:hover:text-white transition">
-           Upload Music
-        </a>
+        <div>
+          {session ? (
+            <Link href="/upload" className="text-sm font-medium hover:underline text-zinc-500 hover:text-black dark:hover:text-white transition">
+               Upload Music
+            </Link>
+          ) : (
+            <Link href="/api/auth/signin" className="text-sm font-medium hover:underline text-zinc-500 hover:text-black dark:hover:text-white transition">
+               Login
+            </Link>
+          )}
+        </div>
       </header>
       
-      <LibraryView albums={albums} artistInfos={artistInfos} />
+      <LibraryView albums={albums} artistInfos={artistInfos} isAuthenticated={!!session} />
     </main>
   );
 }

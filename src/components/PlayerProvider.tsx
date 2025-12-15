@@ -25,6 +25,8 @@ type PlayerContextType = {
   seek: (time: number) => void;
   volume: number;
   setVolume: (volume: number) => void;
+  isShuffle: boolean;
+  toggleShuffle: () => void;
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -36,6 +38,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1); // Default 100%
+  const [isShuffle, setIsShuffle] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -44,15 +47,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     audioRef.current.volume = volume; // Set initial volume
     audioRef.current.ontimeupdate = () => setCurrentTime(audioRef.current?.currentTime || 0);
     audioRef.current.onloadedmetadata = () => setDuration(audioRef.current?.duration || 0);
-    audioRef.current.onended = nextTrack;
     
+    // Sync state with audio events (handling external controls)
+    audioRef.current.onplay = () => setIsPlaying(true);
+    audioRef.current.onpause = () => setIsPlaying(false);
+
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.onplay = null;
+        audioRef.current.onpause = null;
         audioRef.current = null;
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   useEffect(() => {
     if (audioRef.current) {
@@ -85,25 +94,49 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const togglePlay = () => setIsPlaying(!isPlaying);
 
+  const toggleShuffle = () => setIsShuffle(!isShuffle);
+
   const nextTrack = () => {
-    if (!currentTrack) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
-    if (currentIndex < queue.length - 1) {
-      setCurrentTrack(queue[currentIndex + 1]);
+    if (!currentTrack || queue.length === 0) return;
+
+    if (isShuffle) {
+      // Pick random track
+      const randomIndex = Math.floor(Math.random() * queue.length);
+      setCurrentTrack(queue[randomIndex]);
     } else {
-        setIsPlaying(false);
+      const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+      if (currentIndex !== -1 && currentIndex < queue.length - 1) {
+        setCurrentTrack(queue[currentIndex + 1]);
+      } else {
+          setIsPlaying(false);
+      }
     }
   };
 
   const prevTrack = () => {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
+    
+    // Restart if played for more than 5 seconds
+    if (currentTime > 5) {
+        if (audioRef.current) audioRef.current.currentTime = 0;
+        return;
+    }
+
+    // Go to previous track if available
     if (currentIndex > 0) {
       setCurrentTrack(queue[currentIndex - 1]);
     } else {
-        audioRef.current!.currentTime = 0;
+        // If at the beginning of the queue, just restart
+        if (audioRef.current) audioRef.current.currentTime = 0;
     }
   };
+
+  useEffect(() => {
+    if (audioRef.current) {
+        audioRef.current.onended = nextTrack;
+    }
+  }, [nextTrack]);
 
   const seek = (time: number) => {
       if (audioRef.current) {
@@ -113,7 +146,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <PlayerContext.Provider value={{ currentTrack, isPlaying, playTrack, togglePlay, nextTrack, prevTrack, queue, setQueue, currentTime, duration, seek, volume, setVolume }}>
+    <PlayerContext.Provider value={{ currentTrack, isPlaying, playTrack, togglePlay, nextTrack, prevTrack, queue, setQueue, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle }}>
       {children}
     </PlayerContext.Provider>
   );

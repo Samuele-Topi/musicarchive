@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import fs from 'fs/promises';
+import { unlink } from 'fs/promises';
 import path from 'path';
+import { auth } from '@/auth';
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
 
@@ -18,7 +27,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     // Delete file from filesystem
     const filePath = path.join(process.cwd(), 'public', track.fileUrl);
     try {
-        await fs.unlink(filePath);
+        await unlink(filePath);
     } catch (e) {
         console.warn("File deletion failed, might not exist:", filePath);
     }
@@ -38,7 +47,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
              if (album && album.coverUrl) {
                  const coverPath = path.join(process.cwd(), 'public', album.coverUrl);
                  try {
-                    await fs.unlink(coverPath);
+                    await unlink(coverPath);
                  } catch (e) {
                      console.warn("Cover deletion failed:", coverPath);
                  }

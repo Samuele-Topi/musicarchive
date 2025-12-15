@@ -98,5 +98,35 @@ ssh root@YOUR_DROPLET_IP_ADDRESS
 Your Music Archive will be accessible via your Droplet's IP address in your web browser:
 `http://YOUR_DROPLET_IP_ADDRESS`
 
+## Option 2: Local Hosting with Cloudflare Tunnel
+
+If you prefer to host the application on your local machine and expose it securely to the internet, you can use Cloudflare Tunnel.
+
+1.  **Install Cloudflared**:
+    Download the `cloudflared` executable for your OS.
+
+2.  **Start the Tunnel**:
+    Run the following command to expose your local Next.js app (running on port 3000):
+    ```powershell
+    cloudflared tunnel --url http://localhost:3000
+    ```
+    *Note: For a permanent setup, consider creating a named tunnel and running it as a service.*
+
+3.  **Access the Site**:
+    Cloudflare will provide a temporary URL (e.g., `https://random-name.trycloudflare.com`). If you have configured a custom domain (like `samuele-musicarchive.me`), use that instead.
+
+4.  **Run as Service (Windows)**:
+    To keep the site online even after closing the terminal:
+    ```powershell
+    # Install PM2 for the Next.js app
+    npm install -g pm2 pm2-windows-startup
+    pm2-startup install
+    pm2 start npm --name "musicarchive" -- start
+    pm2 save
+
+    # Install Cloudflared as a service
+    cloudflared service install
+    ```
+
 ---
 **Remember to generate your `AUTH_SECRET` locally using `npx auth secret` and set up your GitHub OAuth App for the `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET` values!**

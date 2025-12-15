@@ -4,6 +4,7 @@ import TrackItem from '@/components/TrackItem';
 import { notFound } from 'next/navigation';
 import { Calendar, Clock, User } from 'lucide-react';
 import Link from 'next/link';
+import { auth } from '@/auth';
 
 export default async function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,6 +21,13 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   if (!album) {
     notFound();
   }
+
+  const artistInfo = await prisma.artistInfo.findUnique({
+    where: { name: album.artist }
+  });
+
+  const session = await auth();
+  const isAuthenticated = !!session;
 
   const totalDuration = album.tracks.reduce((acc, track) => acc + (track.duration || 0), 0);
   const trackCount = album.tracks.length;
@@ -47,8 +55,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
              
              <div className="flex items-center gap-6 text-zinc-600 dark:text-zinc-400 text-sm font-medium">
                 <div className="flex items-center gap-2">
-                   <div className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
-                     <User size={14} />
+                   <div className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
+                     {artistInfo?.imageUrl ? (
+                        <img src={artistInfo.imageUrl} alt={album.artist} className="w-full h-full object-cover" />
+                     ) : (
+                        <User size={14} />
+                     )}
                    </div>
                    <Link href={`/artist/${encodeURIComponent(album.artist)}`} className="hover:underline hover:text-black dark:hover:text-white transition">
                       {album.artist}
@@ -70,16 +82,27 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
        {/* Track List */}
        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-8">
          <div className="space-y-1">
-           {album.tracks.map((track) => (
-             <TrackItem 
-                key={track.id} 
-                track={{
-                  ...track,
-                  albumTitle: album.title,
-                  coverUrl: album.coverUrl
-                }} 
-             />
-           ))}
+           {(() => {
+             // Create context for all tracks in this album
+             const context = album.tracks.map(t => ({
+               ...t,
+               albumTitle: album.title,
+               coverUrl: album.coverUrl
+             }));
+
+             return album.tracks.map((track) => (
+               <TrackItem 
+                  key={track.id} 
+                  track={{
+                    ...track,
+                    albumTitle: album.title,
+                    coverUrl: album.coverUrl
+                  }}
+                  context={context} 
+                  isAuthenticated={isAuthenticated}
+               />
+             ));
+           })()}
            {album.tracks.length === 0 && <p className="text-zinc-500">No tracks found in this album.</p>}
          </div>
        </div>

@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { parseBuffer } from 'music-metadata';
+import { writeFile, mkdir } from 'fs/promises';
 import fs from 'fs';
 import path from 'path';
-import { writeFile } from 'fs/promises';
+import * as mm from 'music-metadata';
+import { auth } from '@/auth';
 
-export async function POST(req: NextRequest) {
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const formData = await req.formData();
+    const formData = await request.formData();
     const files = formData.getAll('files') as File[];
 
     if (!files || files.length === 0) {
@@ -23,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const metadata = await parseBuffer(buffer, file.type);
+      const metadata = await mm.parseBuffer(buffer, file.type);
       
       const { common, format } = metadata;
       const title = common.title || file.name.replace(/\.[^/.]+$/, "");

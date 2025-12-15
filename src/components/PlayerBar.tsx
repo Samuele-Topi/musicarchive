@@ -1,11 +1,11 @@
 "use client";
 
 import { usePlayer } from './PlayerProvider';
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from 'lucide-react';
-import { formatTime } from '@/lib/utils';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle } from 'lucide-react';
+import { formatTime, cn } from '@/lib/utils';
 
 export default function PlayerBar() {
-  const { currentTrack, isPlaying, togglePlay, nextTrack, prevTrack, currentTime, duration, seek, volume, setVolume } = usePlayer();
+  const { currentTrack, isPlaying, togglePlay, nextTrack, prevTrack, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle } = usePlayer();
 
   if (!currentTrack) return null;
 
@@ -26,6 +26,16 @@ export default function PlayerBar() {
         {/* Controls */}
         <div className="flex flex-col items-center w-1/3">
           <div className="flex items-center gap-6 mb-2">
+            <button 
+              onClick={toggleShuffle} 
+              className={cn(
+                "transition", 
+                isShuffle ? "text-blue-600 dark:text-blue-400" : "text-zinc-400 hover:text-black dark:hover:text-white"
+              )}
+              title="Shuffle"
+            >
+              <Shuffle size={18} />
+            </button>
             <button onClick={prevTrack} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition">
               <SkipBack size={20} />
             </button>
@@ -35,6 +45,8 @@ export default function PlayerBar() {
             <button onClick={nextTrack} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition">
               <SkipForward size={20} />
             </button>
+             {/* Spacer to balance the shuffle button */}
+             <div className="w-[18px]" /> 
           </div>
           <div className="flex items-center gap-2 w-full max-w-md">
             <span className="text-xs text-zinc-500 w-10 text-right">{formatTime(currentTime)}</span>

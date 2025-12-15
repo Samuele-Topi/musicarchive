@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+*.exe
+/*.db
+check_db.js
 
 # debug
 npm-debug.log*
