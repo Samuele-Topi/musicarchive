@@ -49,3 +49,6 @@ next-env.d.ts
 # local storage
 /public/music
 /public/uploads
+
+# Gemini specific files
+.gemini/REMINDERS.md
