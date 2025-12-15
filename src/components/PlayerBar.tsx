@@ -59,8 +59,8 @@ export default function PlayerBar() {
           </div>
           
           {/* Progress Bar - Hidden on very small screens or minimized? No, needed. */}
-          <div className="flex items-center gap-2 w-32 md:w-96">
-            <span className="text-[10px] text-zinc-500 w-8 text-right hidden md:inline-block">{formatTime(currentTime)}</span>
+          <div className="flex items-center gap-2 w-full max-w-sm md:w-96 md:max-w-md mt-1">
+            <span className="text-[10px] text-zinc-500 w-8 text-right">{formatTime(currentTime)}</span>
             <input 
               type="range" 
               min={0} 
@@ -69,7 +69,7 @@ export default function PlayerBar() {
               onChange={(e) => seek(Number(e.target.value))}
               className="w-full h-1 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700 accent-black dark:accent-white"
             />
-            <span className="text-[10px] text-zinc-500 w-8 hidden md:inline-block">{formatTime(duration)}</span>
+            <span className="text-[10px] text-zinc-500 w-8">{formatTime(duration)}</span>
           </div>
         </div>
 
