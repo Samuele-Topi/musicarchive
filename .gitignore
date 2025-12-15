@@ -24,7 +24,8 @@
 .DS_Store
 *.pem
 *.exe
-/*.db
+*.db
+*.db-journal
 check_db.js
 
 # debug

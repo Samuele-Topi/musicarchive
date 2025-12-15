@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function ArtistHeader({ name, initialImageUrl }: { name: string, initialImageUrl?: string | null }) {
+export default function ArtistHeader({ name, initialImageUrl, isAuthenticated }: { name: string, initialImageUrl?: string | null, isAuthenticated: boolean }) {
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
@@ -48,10 +48,12 @@ export default function ArtistHeader({ name, initialImageUrl }: { name: string, 
         </div>
         
         {/* Edit Overlay */}
-        <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-full cursor-pointer">
-           {isUploading ? <Loader2 className="animate-spin" /> : <Camera />}
-           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
-        </label>
+        {isAuthenticated && (
+          <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-full cursor-pointer">
+             {isUploading ? <Loader2 className="animate-spin" /> : <Camera />}
+             <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+          </label>
+        )}
       </div>
 
       <div>

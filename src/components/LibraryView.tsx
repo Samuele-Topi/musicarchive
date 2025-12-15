@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Album, Track, ArtistInfo } from '@prisma/client';
 import AlbumGrid from './AlbumGrid';
-import { Search, Music, Disc, Mic, Play, Trash2 } from 'lucide-react';
+import { Search, Music, Disc, Mic, Play, Trash2, RefreshCw } from 'lucide-react';
 import { usePlayer } from './PlayerProvider';
 import { cn, formatTime } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -18,8 +18,28 @@ type ViewMode = 'albums' | 'tracks' | 'artists';
 export default function LibraryView({ albums, artistInfos = [], isAuthenticated = false }: { albums: AlbumWithTracks[], artistInfos?: ArtistInfo[], isAuthenticated?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('albums');
+  const [isSyncing, setIsSyncing] = useState(false);
   // const { playTrack, setQueue } = usePlayer(); // No longer needed directly here
   const router = useRouter();
+
+  const handleSync = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await fetch('/api/sync', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        router.refresh();
+        alert(`Sync complete! Added ${data.added} new tracks.`);
+      } else {
+        alert('Sync failed');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Sync error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Create a map for artist images
   const artistImages = useMemo(() => {
@@ -111,15 +131,28 @@ export default function LibraryView({ albums, artistInfos = [], isAuthenticated 
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search library..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition"
-          />
+        <div className="flex gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search library..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition"
+            />
+          </div>
+          
+          {isAuthenticated && (
+            <button
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="p-2 bg-zinc-200 dark:bg-zinc-800 rounded-full hover:bg-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50"
+              title="Sync Library"
+            >
+              <RefreshCw size={20} className={cn("text-zinc-700 dark:text-zinc-300", isSyncing && "animate-spin")} />
+            </button>
+          )}
         </div>
       </div>
 

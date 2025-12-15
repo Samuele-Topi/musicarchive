@@ -4,11 +4,12 @@ A personal, aesthetic music archive built with Next.js, Tailwind CSS, and Prisma
 
 ## Features
 
-- **Upload**: Drag and drop MP3 files to add them to your library. Metadata (Artist, Album, Cover Art) is automatically extracted.
-- **Library**: Browse albums in a beautiful grid layout.
-- **Album Details**: View detailed information about an album, including track list, total duration, and release year.
+- **Sync Library**: Automatically scan your local `public/music` folder to populate the database.
+- **Upload**: Drag and drop MP3 files to add them to your library. Files are automatically organized into `public/music/Artist/Album/`.
+- **Metadata-Driven**: Cover art and track info are read directly from MP3 ID3 tags.
+- **Library**: Browse albums in a beautiful grid layout or switch to Track/Artist views.
 - **Player**: Persistent global music player with queue management.
-- **Search**: (Coming soon) Filter by artist or album.
+- **Search**: Filter by artist, album, or track name.
 
 ## Setup
 
@@ -19,23 +20,37 @@ A personal, aesthetic music archive built with Next.js, Tailwind CSS, and Prisma
 
 2.  **Initialize Database**:
     ```bash
-    npx prisma migrate dev --name init
+    npx prisma migrate dev
     ```
 
-3.  **Run Development Server**:
+3.  **Configure Music Folder**:
+    - The app looks for music in `public/music`.
+    - **Recommended**: Create a junction/symlink to your existing music library:
+      ```powershell
+      # PowerShell (Admin)
+      New-Item -ItemType Junction -Path "public/music" -Target "C:\Path\To\Your\Music"
+      ```
+
+4.  **Run Development Server**:
     ```bash
     npm run dev
     ```
 
-4.  **Open Browser**:
+5.  **Open Browser**:
     Go to `http://localhost:3000`.
 
 ## Usage
 
-1.  Navigate to `/upload` (click "Upload Music" in the header).
-2.  Drag and drop MP3 files. They will be uploaded to `public/uploads` and added to the SQLite database.
-3.  Go back to the home page to see your albums.
-4.  Click an album to play it.
+### Syncing Existing Music
+1.  Ensure your music files are accessible in `public/music` (via copy or symlink).
+2.  Log in (if authentication is enabled).
+3.  Click the **Sync** button (refresh icon) next to the search bar.
+4.  The app will scan recursively and add new tracks to the database.
+
+### Uploading New Music
+1.  Navigate to the `/upload` page.
+2.  Drag and drop MP3 files.
+3.  Files are automatically renamed and moved to `public/music/{Artist}/{Album}/{Title}.mp3`.
 
 ## Architecture
 
@@ -43,9 +58,13 @@ A personal, aesthetic music archive built with Next.js, Tailwind CSS, and Prisma
 - **Styling**: Tailwind CSS v4
 - **Database**: SQLite with Prisma ORM
 - **Audio**: HTML5 Audio API via Custom React Hook
-- **File Storage**: Local filesystem (`public/uploads`)
+- **File Storage**:
+    - Music: `public/music` (Organized by Artist/Album)
+    - Artist Images: `public/uploads/artists`
+    - Album Covers: Served dynamically from MP3 metadata (no separate files).
 
 ## Notes
 
-- This is designed for personal use (single user upload).
-- Ensure `public/uploads` is writable.
+- **Git & Backup**:
+    - `public/music` and `public/uploads` are **ignored** by Git to keep the repo light.
+    - Your actual music files stay on your disk (or linked location).

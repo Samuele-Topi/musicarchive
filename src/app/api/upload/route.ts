@@ -12,6 +12,10 @@ export const config = {
   },
 };
 
+function sanitize(str: string): string {
+  return str.replace(/[^a-z0-9\-_ ]/gi, '').trim();
+}
+
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session) {
@@ -26,10 +30,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    // Base music directory
+    const baseDir = path.join(process.cwd(), 'public', 'music');
 
     const results = [];
 
@@ -40,35 +42,35 @@ export async function POST(request: NextRequest) {
       const { common, format } = metadata;
       const title = common.title || file.name.replace(/\.[^/.]+$/, "");
       
-      // Artist Logic:
-      // If comma separated, take the first one for the Album Artist (grouping)
-      // Keep the full string for the Track Artist (display)
       const rawArtist = common.artist || "Unknown Artist";
-      const mainArtist = rawArtist.split(/,|\//)[0].trim(); // Split by comma or slash
-      
+      const mainArtist = rawArtist.split(/,|\//)[0].trim();
       const albumName = common.album || "Unknown Album";
       const year = common.year || new Date().getFullYear();
       const duration = format.duration || 0;
       const trackNumber = common.track.no || 0;
 
-      // Handle Cover Art
-      let coverUrl = null;
-      if (common.picture && common.picture.length > 0) {
-        const picture = common.picture[0];
-        const coverFileName = `${mainArtist}-${albumName}-${Date.now()}.jpg`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const coverPath = path.join(uploadDir, coverFileName);
-        await writeFile(coverPath, picture.data);
-        coverUrl = `/uploads/${coverFileName}`;
+      // Organize: public/music/Artist/Album/
+      const safeArtist = sanitize(mainArtist);
+      const safeAlbum = sanitize(albumName);
+      const safeTitle = sanitize(title);
+      
+      const artistDir = path.join(baseDir, safeArtist);
+      const albumDir = path.join(artistDir, safeAlbum);
+      
+      if (!fs.existsSync(albumDir)) {
+        await mkdir(albumDir, { recursive: true });
       }
 
-      // Save Audio File
-      const fileName = `${mainArtist}-${title}-${Date.now()}${path.extname(file.name)}`.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-      const filePath = path.join(uploadDir, fileName);
+      const fileName = `${safeTitle}${path.extname(file.name)}`;
+      const filePath = path.join(albumDir, fileName);
+      
+      // Save file
       await writeFile(filePath, buffer);
-      const fileUrl = `/uploads/${fileName}`;
+      
+      // Store relative path for serving
+      const fileUrl = `/music/${safeArtist}/${safeAlbum}/${fileName}`;
 
       // Database Operations
-      // Find or Create Album using mainArtist
       let album = await prisma.album.findFirst({
         where: { title: albumName, artist: mainArtist }
       });
@@ -79,18 +81,22 @@ export async function POST(request: NextRequest) {
             title: albumName,
             artist: mainArtist,
             year: year,
-            coverUrl: coverUrl
+            // We will set coverUrl dynamically after ID is known, 
+            // but actually we can just set it now assuming the endpoint pattern
+            // However, we need the album ID for the endpoint.
+            // So we create first.
           }
         });
-      } else if (!album.coverUrl && coverUrl) {
-         // Update cover if it was missing
-         album = await prisma.album.update({
+        
+        // Update with dynamic cover URL
+        const dynamicCoverUrl = `/api/cover/album/${album.id}`;
+        album = await prisma.album.update({
             where: { id: album.id },
-            data: { coverUrl }
-         });
+            data: { coverUrl: dynamicCoverUrl }
+        });
       }
 
-      // Create Track with rawArtist (includes features)
+      // Create Track
       const track = await prisma.track.create({
         data: {
           title: title,
