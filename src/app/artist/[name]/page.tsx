@@ -42,7 +42,12 @@ export default async function ArtistPage({ params }: { params: Promise<{ name: s
     <main className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-100 p-8 pb-32">
       <a href="/" className="text-sm font-medium hover:underline text-zinc-500 mb-8 inline-block">&larr; Back to Library</a>
       
-      <ArtistHeader name={decodedName} initialImageUrl={artistInfo?.imageUrl} isAuthenticated={isAuthenticated} />
+      <ArtistHeader 
+        name={decodedName} 
+        initialImageUrl={artistInfo?.imageUrl} 
+        bio={artistInfo?.bio}
+        isAuthenticated={isAuthenticated} 
+      />
 
       <h2 className="text-2xl font-bold mb-4">Tracks</h2>
       <div className="space-y-1">

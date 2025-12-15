@@ -35,5 +35,6 @@ model Track {
 model ArtistInfo {
   name      String   @id
   imageUrl  String?
+  bio       String?
   createdAt DateTime @default(now())
 }

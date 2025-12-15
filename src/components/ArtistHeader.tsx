@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function ArtistHeader({ name, initialImageUrl, isAuthenticated }: { name: string, initialImageUrl?: string | null, isAuthenticated: boolean }) {
+export default function ArtistHeader({ name, initialImageUrl, isAuthenticated, bio }: { name: string, initialImageUrl?: string | null, isAuthenticated: boolean, bio?: string | null }) {
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function ArtistHeader({ name, initialImageUrl, isAuthenticated }:
   };
 
   return (
-    <div className="flex items-center gap-6 mb-8">
+    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
       <div className="relative group w-32 h-32 md:w-40 md:h-40 flex-shrink-0">
         <div className="w-full h-full rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800 shadow-md border-4 border-white dark:border-black">
           {imageUrl ? (
@@ -56,9 +56,14 @@ export default function ArtistHeader({ name, initialImageUrl, isAuthenticated }:
         )}
       </div>
 
-      <div>
+      <div className="text-center md:text-left">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tighter dark:text-white">{name}</h1>
         <p className="text-zinc-500 mt-2 text-lg">Artist</p>
+        {bio && (
+          <p className="text-zinc-600 dark:text-zinc-400 mt-4 max-w-2xl text-sm leading-relaxed whitespace-pre-wrap">
+            {bio}
+          </p>
+        )}
       </div>
     </div>
   );
