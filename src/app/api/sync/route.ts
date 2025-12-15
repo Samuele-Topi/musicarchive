@@ -43,7 +43,7 @@ export async function POST() {
   }
 
   try {
-    const musicDir = path.join(process.cwd(), 'public', 'music');
+    const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
     if (!fs.existsSync(musicDir)) {
       return NextResponse.json({ message: 'No music directory found', added: 0 });
     }

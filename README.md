@@ -27,18 +27,13 @@ Setting up your personal music sanctuary is easy!
     npx prisma migrate dev
     ```
 
-3.  **Music Folder Configuration**:
-    -   Your music library lives in `public/music`.
-    -   **Pro Tip**: For a clean setup and to save disk space, create a symbolic link (junction on Windows) to your existing music collection:
-        ```powershell
-        # On Windows (Run as Administrator)
-        New-Item -ItemType Junction -Path "public/music" -Target "C:\Path\To\Your\Massive\Music\Collection"
+3.  **Configure Music Folder**:
+    -   The app needs to know where your music is stored.
+    -   Open `.env` (create it if missing) and add:
+        ```env
+        MUSIC_DIR="C:\Path\To\Your\Music"
         ```
-        ```bash
-        # On macOS/Linux
-        ln -s /path/to/your/music/collection public/music
-        ```
-        *(Replace `C:\Path\To\Your\Massive\Music\Collection` or `/path/to/your/music/collection` with your actual music folder path.)*
+    -   *(No need to put files in `public/music` anymore!)*
 
 4.  **Launch Development Server**:
     ```bash

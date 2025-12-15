@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Base music directory
-    const baseDir = path.join(process.cwd(), 'public', 'music');
+    const baseDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
 
     const results = [];
 
