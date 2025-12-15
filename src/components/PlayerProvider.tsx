@@ -14,6 +14,7 @@ type Track = {
 type PlayerContextType = {
   currentTrack: Track | null;
   isPlaying: boolean;
+  isLoading: boolean; // Add this
   playTrack: (track: Track) => void;
   togglePlay: () => void;
   nextTrack: () => void;
@@ -34,33 +35,41 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Add this
   const [queue, setQueue] = useState<Track[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1); // Default 100%
+  const [volume, setVolume] = useState(1); 
   const [isShuffle, setIsShuffle] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     audioRef.current = new Audio();
-    audioRef.current.volume = volume; // Set initial volume
+    audioRef.current.preload = "auto"; // Ensure preload
+    audioRef.current.volume = volume;
     audioRef.current.ontimeupdate = () => setCurrentTime(audioRef.current?.currentTime || 0);
     audioRef.current.onloadedmetadata = () => setDuration(audioRef.current?.duration || 0);
     
-    // Sync state with audio events (handling external controls)
-    audioRef.current.onplay = () => setIsPlaying(true);
+    // Sync state with audio events
+    audioRef.current.onplay = () => { setIsPlaying(true); setIsLoading(false); };
     audioRef.current.onpause = () => setIsPlaying(false);
+    audioRef.current.onwaiting = () => setIsLoading(true); // Buffer stall
+    audioRef.current.onplaying = () => setIsLoading(false); // Resuming from buffer stall
+    audioRef.current.oncanplay = () => setIsLoading(false); // Ready to play
 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.onplay = null;
         audioRef.current.onpause = null;
+        audioRef.current.onwaiting = null;
+        audioRef.current.onplaying = null;
+        audioRef.current.oncanplay = null;
         audioRef.current = null;
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); 
 
 
   useEffect(() => {
@@ -72,14 +81,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const playAudio = async () => {
       if (currentTrack && audioRef.current) {
+        setIsLoading(true); // Start loading
         try {
-          audioRef.current.src = encodeURI(currentTrack.fileUrl);
+          // If we are already playing the same url, don't reload
+          const encodedUrl = encodeURI(currentTrack.fileUrl);
+          if (audioRef.current.src !== window.location.origin + encodedUrl && audioRef.current.src !== encodedUrl) {
+             audioRef.current.src = encodedUrl;
+          }
+          
           await audioRef.current.play();
-          setIsPlaying(true);
+          // isPlaying/isLoading handled by event listeners above
         } catch (error: any) {
-          // Ignore AbortError as it means playback was interrupted by a new load
           if (error.name !== 'AbortError') {
              console.error("Playback failed", error);
+             setIsLoading(false);
           }
         }
       }
@@ -90,7 +105,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (audioRef.current) {
-      if (isPlaying) audioRef.current.play().catch(() => {});
+      if (isPlaying) {
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                  if (error.name !== 'AbortError') console.error("Play interrupted", error);
+              });
+          }
+      }
       else audioRef.current.pause();
     }
   }, [isPlaying]);
@@ -112,7 +134,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!currentTrack || queue.length === 0) return;
 
     if (isShuffle) {
-      // Pick random track
       const randomIndex = Math.floor(Math.random() * queue.length);
       setCurrentTrack(queue[randomIndex]);
     } else {
@@ -129,17 +150,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!currentTrack) return;
     const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
     
-    // Restart if played for more than 5 seconds
     if (currentTime > 5) {
         if (audioRef.current) audioRef.current.currentTime = 0;
         return;
     }
 
-    // Go to previous track if available
     if (currentIndex > 0) {
       setCurrentTrack(queue[currentIndex - 1]);
     } else {
-        // If at the beginning of the queue, just restart
         if (audioRef.current) audioRef.current.currentTime = 0;
     }
   };
@@ -158,7 +176,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <PlayerContext.Provider value={{ currentTrack, isPlaying, playTrack, togglePlay, nextTrack, prevTrack, queue, setQueue, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle }}>
+    <PlayerContext.Provider value={{ currentTrack, isPlaying, isLoading, playTrack, togglePlay, nextTrack, prevTrack, queue, setQueue, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle }}>
       {children}
     </PlayerContext.Provider>
   );

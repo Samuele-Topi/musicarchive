@@ -1,11 +1,11 @@
 "use client";
 
 import { usePlayer } from './PlayerProvider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Shuffle, Loader2 } from 'lucide-react';
 import { formatTime, cn } from '@/lib/utils';
 
 export default function PlayerBar() {
-  const { currentTrack, isPlaying, togglePlay, nextTrack, prevTrack, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle } = usePlayer();
+  const { currentTrack, isPlaying, isLoading, togglePlay, nextTrack, prevTrack, currentTime, duration, seek, volume, setVolume, isShuffle, toggleShuffle } = usePlayer();
 
   if (!currentTrack) return null;
 
@@ -39,8 +39,16 @@ export default function PlayerBar() {
             <button onClick={prevTrack} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition">
               <SkipBack size={20} />
             </button>
-            <button onClick={togglePlay} className="w-10 h-10 flex items-center justify-center rounded-full bg-black dark:bg-white text-white dark:text-black hover:scale-105 transition shadow-md">
-              {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+            <button 
+              onClick={togglePlay} 
+              disabled={isLoading}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-black dark:bg-white text-white dark:text-black hover:scale-105 transition shadow-md disabled:opacity-80 disabled:hover:scale-100"
+            >
+              {isLoading ? (
+                <Loader2 size={20} className="animate-spin text-white dark:text-black" />
+              ) : (
+                isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />
+              )}
             </button>
             <button onClick={nextTrack} className="text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition">
               <SkipForward size={20} />
