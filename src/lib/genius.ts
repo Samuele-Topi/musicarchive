@@ -32,7 +32,7 @@ export async function searchArtistOnGenius(artistName: string) {
     const artistId = hit.result.primary_artist.id;
     
     // 2. Fetch Artist Details
-    const artistUrl = `${BASE_URL}/artists/${artistId}`;
+    const artistUrl = `${BASE_URL}/artists/${artistId}?text_format=plain`;
     const artistRes = await fetch(artistUrl, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
