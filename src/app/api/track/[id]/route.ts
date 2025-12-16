@@ -111,8 +111,8 @@ export async function PUT(
       data: {
         title,
         artist,
-        features,
-        genre,
+        features: features || null,
+        genre: genre || null,
         trackNumber: trackNumber ? parseInt(trackNumber) : undefined,
         albumId: finalAlbumId,
       },
