@@ -4,6 +4,7 @@ import fs from 'fs'; // Use fs directly for createReadStream
 import path from 'path';
 import { promisify } from 'util'; // Keep promisify for fs.stat
 import { auth } from '@/auth';
+import { getMusicFilePath } from '@/lib/serverUtils';
 
 const stat = promisify(fs.stat);
 
@@ -47,58 +48,56 @@ export async function GET(
     }
 
     // 3. Construct full file path
-    const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
-    const filePath = path.join(musicDir, track.fileUrl); // Assuming track.fileUrl is relative to musicDir
-
-    // Security check: Ensure we don't traverse up
-    if (!filePath.startsWith(musicDir)) {
-      return new NextResponse('Forbidden', { status: 403 });
-    }
+    const filePath = getMusicFilePath(track.fileUrl);
 
     // 4. Check if file exists
-    const stats = await stat(filePath);
-    if (!stats.isFile()) {
-      return new NextResponse('File not found', { status: 404 });
+    try {
+        const stats = await stat(filePath);
+        if (!stats.isFile()) {
+            return new NextResponse('File not found', { status: 404 });
+        }
+
+        const fileName = path.basename(filePath);
+        const ext = path.extname(filePath).toLowerCase(); // Get extension for logging
+        const contentType = getContentType(filePath);
+
+        console.log('--- Single Track Download Debug ---');
+        console.log('filePath:', filePath);
+        console.log('fileName:', fileName);
+        console.log('ext:', ext);
+        console.log('contentType:', contentType);
+        console.log('-----------------------------------');
+
+        const fileStream = fs.createReadStream(filePath);
+
+        const readableWebStream = new ReadableStream({
+            start(controller) {
+                fileStream.on('data', (chunk) => controller.enqueue(chunk));
+                fileStream.on('end', () => controller.close());
+                fileStream.on('error', (err) => controller.error(err));
+            },
+            cancel() {
+                fileStream.destroy();
+            }
+        });
+
+        // 5. Send file with appropriate headers for download
+        const headers = new Headers();
+        headers.set('Content-Type', contentType);
+        headers.set('Content-Disposition', `attachment; filename="${fileName}"`);
+        headers.set('Content-Length', stats.size.toString());
+
+        // @ts-ignore: Next.js Stream/Response type compatibility
+        return new NextResponse(readableWebStream, { headers });
+    } catch (err: any) {
+        if (err.code === 'ENOENT') {
+            return new NextResponse('File not found', { status: 404 });
+        }
+        throw err;
     }
-
-    const fileName = path.basename(filePath);
-    const ext = path.extname(filePath).toLowerCase(); // Get extension for logging
-    const contentType = getContentType(filePath);
-
-    console.log('--- Single Track Download Debug ---');
-    console.log('filePath:', filePath);
-    console.log('fileName:', fileName);
-    console.log('ext:', ext);
-    console.log('contentType:', contentType);
-    console.log('-----------------------------------');
-
-    const fileStream = fs.createReadStream(filePath);
-
-    const readableWebStream = new ReadableStream({
-      start(controller) {
-        fileStream.on('data', (chunk) => controller.enqueue(chunk));
-        fileStream.on('end', () => controller.close());
-        fileStream.on('error', (err) => controller.error(err));
-      },
-      cancel() {
-        fileStream.destroy();
-      }
-    });
-
-    // 5. Send file with appropriate headers for download
-    const headers = new Headers();
-    headers.set('Content-Type', contentType);
-    headers.set('Content-Disposition', `attachment; filename="${fileName}"`);
-    headers.set('Content-Length', stats.size.toString());
-    
-    // @ts-ignore: Next.js Stream/Response type compatibility
-    return new NextResponse(readableWebStream, { headers });
 
   } catch (error: any) {
     console.error('Single track download error:', error);
-    if (error.code === 'ENOENT') {
-      return new NextResponse('File not found', { status: 404 });
-    }
     return new NextResponse('Download failed', { status: 500 });
   }
 }

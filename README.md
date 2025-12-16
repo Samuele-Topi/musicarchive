@@ -6,9 +6,10 @@ Built with the modern web stack: Next.js 🚀, Tailwind CSS ✨, and Prisma 🐘
 
 ## ✨ Features
 
-- **📂 Smart Library Sync**: Automatically scans your local `public/music` folder and populates your database. No more manual track entry!
-- **⬆️ Effortless Uploads**: Drag & drop MP3 files, and watch them organize themselves into `public/music/{Artist}/{Album}/`.
-- **🖼️ Rich Metadata & Covers**: All album cover art and track details are read directly from your MP3s' ID3 tags. Artist images can be manually uploaded. Beautifully displayed, no extra files!
+- **📂 Automatic Background Sync**: The app watches your `public/music` folder in real-time. Just drop your files, and they appear in the library instantly!
+- **⬆️ Effortless Uploads**: Drag & drop MP3 files via the UI, or manage the folder directly.
+- **🖼️ Rich Metadata & Covers**: All album cover art and track details are read directly from your MP3s' ID3 tags.
+- **📦 Smart Downloads**: Download full albums or artist discographies as ZIP files, or grab individual tracks with ease.
 - **🌐 Intuitive Browsing**: Explore your collection in a gorgeous album grid, or switch to detailed track and artist views.
 - **▶️ Seamless Playback**: A persistent global player with queue management keeps the music flowing.
 - **🔍 Quick Search**: Find your favorite tunes by artist, album, or track name in an instant.
@@ -45,25 +46,28 @@ Setting up your personal music sanctuary is easy!
 
 ## ⚙️ Usage
 
-### Synchronizing Your Existing Library
-1.  Ensure your MP3s are correctly linked or copied into `public/music`.
-2.  **Authenticate**: Log in to access administrative features.
-3.  Click the **Sync** button (🔄 icon) next to the search bar.
-4.  Watch as your entire collection is magically added to the database!
+### Synchronizing Your Library
+-   **Automatic**: The app now monitors your music folder for changes. Add or remove files, and the library updates automatically.
+-   **Manual**: You can still click the **Sync** button (🔄 icon) next to the search bar to force a rescan if needed.
 
 ### Uploading New Tracks
 1.  Navigate to the dedicated `/upload` page.
 2.  **Authenticate**: Log in to upload new files.
 3.  Simply drag and drop your MP3s. They will be automatically organized and stored.
 
+### Downloading Music
+-   **Albums/Artists**: Click the "Download" button on any album or artist page to get a ZIP archive of the tracks.
+-   **Single Tracks**: Click the download icon next to any track.
+
 ### Managing Artist Images (Manual Upload)
 -   Artist images are not automatically fetched. **Authenticated users** can upload artist images directly from the artist's page by hovering over the placeholder/existing image and clicking the camera icon.
 
 ## 🏗️ Architecture Under the Hood
 
--   **Frontend Framework**: Next.js 15 (App Router)
+-   **Frontend Framework**: Next.js 15 (App Router) with `experimental.instrumentationHook` for background tasks.
 -   **Styling**: Tailwind CSS v4 for a sleek, modern look.
 -   **Database**: SQLite for simplicity and speed, powered by Prisma ORM.
+-   **File Watching**: Powered by `chokidar` for real-time library updates.
 -   **Audio Playback**: Robust HTML5 Audio API via a custom React Hook.
 -   **File Storage**:
     -   Music files reside in `public/music` (organized by Artist/Album).

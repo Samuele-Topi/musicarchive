@@ -34,3 +34,8 @@ body {
 .animate-equalizer-1 { animation: equalizer 0.8s infinite ease-in-out; }
 .animate-equalizer-2 { animation: equalizer 0.8s 0.2s infinite ease-in-out; }
 .animate-equalizer-3 { animation: equalizer 0.8s 0.4s infinite ease-in-out; }
+
+/* Hide Next.js Link prefetch indicator */
+.next-route-announcer {
+  display: none !important;
+}

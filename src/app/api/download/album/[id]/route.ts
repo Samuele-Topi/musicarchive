@@ -5,6 +5,7 @@ import path from 'path';
 import archiver from 'archiver';
 import { auth } from '@/auth';
 import stream from 'stream'; // Import stream
+import { getMusicFilePath } from '@/lib/serverUtils';
 
 export async function GET(
   request: NextRequest,
@@ -33,8 +34,6 @@ export async function GET(
       return new NextResponse('No tracks found for this album', { status: 404 });
     }
 
-    const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
-
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
     });
@@ -48,13 +47,7 @@ export async function GET(
         console.warn(`Track ${track.title} has no fileUrl. Skipping.`);
         continue;
       }
-      const filePath = path.join(musicDir, track.fileUrl);
-
-      // Security check: Ensure we don't traverse up
-      if (!filePath.startsWith(musicDir)) {
-        console.warn(`Attempted path traversal for track: ${track.fileUrl}`);
-        continue; // Skip this track, but don't fail the entire archive
-      }
+      const filePath = getMusicFilePath(track.fileUrl);
 
       try {
         const fileStat = fs.statSync(filePath);
