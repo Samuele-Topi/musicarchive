@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { Calendar, Clock, User, Download } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/auth';
+import AlbumActions from '@/components/AlbumActions';
 
 export default async function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,7 +54,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
              <h4 className="font-medium text-zinc-500 uppercase tracking-wider text-sm mb-2">Album</h4>
              <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">{album.title}</h1>
              
-             <div className="flex items-center gap-6 text-zinc-600 dark:text-zinc-400 text-sm font-medium">
+             <div className="flex items-center gap-6 text-zinc-600 dark:text-zinc-400 text-sm font-medium flex-wrap">
                 <div className="flex items-center gap-2">
                    <div className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
                      {artistInfo?.imageUrl ? (
@@ -75,6 +76,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                    <span>{trackCount} songs,</span>
                    <span className="opacity-75">{formatTime(totalDuration)}</span>
                 </div>
+                
                 <a 
                   href={`/api/download/album/${album.id}`}
                   download
@@ -83,6 +85,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                 >
                   <Download size={16} /> Download Album
                 </a>
+
+                {isAuthenticated && (
+                    <AlbumActions albumId={album.id} />
+                )}
              </div>
           </div>
        </div>

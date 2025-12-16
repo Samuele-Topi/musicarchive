@@ -15,7 +15,7 @@ async function getFiles(dir: string): Promise<string[]> {
   return Array.prototype.concat(...files);
 }
 
-// Prune tracks that no longer exist on disk
+// Prune tracks that no longer exist on disk OR are duplicates
 async function pruneLibrary() {
     console.log('[Sync] Starting library cleanup (pruning)...');
     const allTracks = await prisma.track.findMany({
@@ -23,7 +23,21 @@ async function pruneLibrary() {
     });
 
     let removedCount = 0;
+    const normalizedPaths = new Set<string>();
+
     for (const track of allTracks) {
+        // 1. Check for Duplicates (Case-Insensitive)
+        const normalizedUrl = track.fileUrl.toLowerCase();
+        if (normalizedPaths.has(normalizedUrl)) {
+             // This is a duplicate!
+             await prisma.track.delete({ where: { id: track.id } });
+             console.log(`[Sync] Pruned duplicate track: ${track.title} (${track.fileUrl})`);
+             removedCount++;
+             continue; // Skip file existence check since we deleted it
+        }
+        normalizedPaths.add(normalizedUrl);
+
+        // 2. Check for Existence
         // Use the helper to resolve the absolute path correctly
         const fullPath = getMusicFilePath(track.fileUrl);
         
@@ -52,7 +66,7 @@ async function pruneLibrary() {
         }
     }
     
-    console.log(`[Sync] Pruning complete. Removed ${removedCount} missing tracks.`);
+    console.log(`[Sync] Pruning complete. Removed ${removedCount} tracks.`);
     return removedCount;
 }
 
@@ -76,11 +90,11 @@ export async function syncLibrary() {
   const allFiles = await getFiles(musicDir);
   const mp3Files = allFiles.filter(f => path.extname(f).toLowerCase() === '.mp3');
 
-  // 3. Get existing file URLs from DB
+  // 3. Get existing file URLs from DB (Case Insensitive Set)
   const existingTracks = await prisma.track.findMany({
     select: { fileUrl: true }
   });
-  const existingSet = new Set(existingTracks.map(t => t.fileUrl));
+  const existingSet = new Set(existingTracks.map(t => t.fileUrl.toLowerCase()));
 
   let addedCount = 0;
   const errors = [];
@@ -92,7 +106,7 @@ export async function syncLibrary() {
       const fileUrl = `/music${relativePath.split(path.sep).join('/')}`;
 
       // Check if already exists (case sensitive check is standard, but Pruning handles changes)
-      if (existingSet.has(fileUrl)) {
+      if (existingSet.has(fileUrl.toLowerCase())) {
           continue;
       }
 
