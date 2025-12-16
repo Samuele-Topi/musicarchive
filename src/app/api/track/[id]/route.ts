@@ -75,7 +75,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, artist, genre, trackNumber, albumId, newAlbumTitle } = body;
+    const { title, artist, features, genre, trackNumber, albumId, newAlbumTitle } = body;
 
     let finalAlbumId = albumId;
 
@@ -94,7 +94,7 @@ export async function PUT(
                 data: {
                     title: newAlbumTitle,
                     artist: albumArtist,
-                    year: new Date().getFullYear(), // Default to current year or maybe pass year in body?
+                    year: new Date().getFullYear(),
                 }
             });
             // Update cover placeholder
@@ -111,6 +111,7 @@ export async function PUT(
       data: {
         title,
         artist,
+        features,
         genre,
         trackNumber: trackNumber ? parseInt(trackNumber) : undefined,
         albumId: finalAlbumId,
@@ -118,8 +119,8 @@ export async function PUT(
     });
 
     return NextResponse.json(track);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update error:', error);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Update failed', details: error.message }, { status: 500 });
   }
 }

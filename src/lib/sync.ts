@@ -53,7 +53,16 @@ export async function syncLibrary() {
           const { common, format } = metadata;
 
           const title = common.title || path.basename(filePath, '.mp3');
-          const rawArtist = common.artist || "Unknown Artist";
+          let rawArtist = common.artist || "Unknown Artist";
+          let features = null;
+
+          // Extract features from artist string
+          const featMatch = rawArtist.match(/\s(feat\.|ft\.)\s+(.*)$/i);
+          if (featMatch) {
+              features = featMatch[2];
+              rawArtist = rawArtist.substring(0, featMatch.index).trim();
+          }
+
           const mainArtist = rawArtist.split(/,|\//)[0].trim();
           
           const albumName = common.album || "Unknown Album";
@@ -92,6 +101,7 @@ export async function syncLibrary() {
               data: {
                   title,
                   artist: rawArtist,
+                  features,
                   genre,
                   fileUrl,
                   duration,

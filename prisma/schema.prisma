@@ -23,7 +23,8 @@ model Album {
 model Track {
   id          String   @id @default(uuid())
   title       String
-  artist      String?  // Specific artist for this track (e.g. including features)
+  artist      String?  // Main artist
+  features    String?  // Featured artists
   genre       String?
   fileUrl     String
   duration    Float?

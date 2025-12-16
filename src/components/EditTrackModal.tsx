@@ -18,6 +18,7 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave, albums 
   const [formData, setFormData] = useState({
     title: track.title,
     artist: track.artist || '',
+    features: track.features || '',
     genre: track.genre || '',
     trackNumber: track.trackNumber || 0,
     albumId: track.albumId || '',
@@ -33,16 +34,16 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave, albums 
 
   // Artist Combobox Handlers
   const handleArtistChange = (value: string) => {
-      // Check if value matches an existing artist ID or Name? 
-      // Our artists list has value=name usually for this app's logic, or value=id?
-      // In LibraryView, allArtists is just a string array. 
-      // We'll assume value is the Artist Name.
       setFormData({ ...formData, artist: value });
+  };
+
+  // Features Combobox Handlers
+  const handleFeaturesChange = (value: string) => {
+      setFormData({ ...formData, features: value });
   };
 
   // Album Combobox Handlers
   const handleAlbumChange = (value: string) => {
-      // value is album ID
       setFormData({ ...formData, albumId: value, newAlbumTitle: '' });
   };
 
@@ -60,14 +61,17 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave, albums 
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error('Failed to update');
+      if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.details || 'Failed to update');
+      }
 
       const updatedTrack = await res.json();
       onSave(updatedTrack);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to update track');
+      alert(`Error: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -102,8 +106,19 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave, albums 
                 options={artists}
                 value={formData.artist}
                 onChange={handleArtistChange}
-                onCreate={handleArtistChange} // For artist, creating is just setting the text
+                onCreate={handleArtistChange} 
                 placeholder="Select or enter artist..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">Features (Featured Artists)</label>
+            <Combobox 
+                options={artists}
+                value={formData.features}
+                onChange={handleFeaturesChange}
+                onCreate={handleFeaturesChange} 
+                placeholder="Select or enter featured artist..."
             />
           </div>
 
@@ -111,14 +126,7 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave, albums 
              <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">Album</label>
              <Combobox 
                 options={albums}
-                value={formData.albumId || formData.newAlbumTitle} // Display ID? No, Combobox needs value to match option.value.
-                // If we have a newAlbumTitle, we want to show that. 
-                // But Combobox logic matches 'value' to 'option.value'. 
-                // We might need to handle this display logic in Combobox or here.
-                // For now, if we have an ID, we pass it. The Combobox will show the label.
-                // If we have a new Title, we pass it? It won't match any option. 
-                // My Combobox implementation displays `selectedOption.label` OR `value`. 
-                // So passing newAlbumTitle as value works!
+                value={formData.albumId || formData.newAlbumTitle} 
                 onChange={handleAlbumChange}
                 onCreate={handleCreateAlbum}
                 placeholder="Select or create album..."

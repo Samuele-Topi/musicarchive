@@ -111,14 +111,19 @@ export default function TrackItem({
           {track.title}
         </h4>
         <div className="flex items-center gap-2 text-sm text-zinc-500 truncate">
-           <span>{track.artist}</span>
+           <div className="flex items-center">
+               <span>{track.artist}</span>
+               {track.features && (
+                   <span className="ml-1 text-zinc-400">feat. {track.features}</span>
+               )}
+           </div>
            {track.genre && (
                <>
-                 <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                 <span className="text-zinc-300 dark:text-zinc-700 mx-2">•</span>
                  <span className="text-xs px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-full">{track.genre}</span>
                </>
            )}
-           <span className="text-zinc-300 dark:text-zinc-700">•</span>
+           <span className="text-zinc-300 dark:text-zinc-700 mx-2">•</span>
            <span>{track.albumTitle}</span>
         </div>
       </div>
