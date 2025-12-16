@@ -28,7 +28,7 @@ export async function GET(
     }
 
     const archive = archiver('zip', {
-      zlib: { level: 9 } // Sets the compression level.
+      zlib: { level: 0 } // Sets the compression level. 0 = STORE (Fastest, no compression)
     });
 
     const passThrough = new stream.PassThrough();
