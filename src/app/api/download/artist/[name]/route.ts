@@ -4,10 +4,11 @@ import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
 import { auth } from '@/auth';
+import stream from 'stream'; // Import stream
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { name: string } } // This line changed
+  { params }: { params: { name: string } }
 ) {
   // 1. Authenticate user
   const session = await auth();
@@ -16,7 +17,7 @@ export async function GET(
   }
 
   try {
-    const { name } = params; // No await here
+    const { name } = params;
     const decodedName = decodeURIComponent(name);
 
     // 2. Fetch all tracks for the artist
@@ -38,19 +39,12 @@ export async function GET(
 
     const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
 
-    // Create a new archiver instance
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
     });
 
-    // Pipe archive data to a temporary stream or directly to response
-    const stream = new ReadableStream({
-      start(controller) {
-        archive.on('data', (chunk) => controller.enqueue(chunk));
-        archive.on('end', () => controller.close());
-        archive.on('error', (err) => controller.error(err));
-      }
-    });
+    const passThrough = new stream.PassThrough();
+    archive.pipe(passThrough);
 
     // Add tracks to the archive
     for (const track of tracks) {
@@ -67,7 +61,7 @@ export async function GET(
       }
 
       try {
-        const fileStat = fs.statSync(filePath); // Use sync for stat in loop or refactor
+        const fileStat = fs.statSync(filePath);
         if (fileStat.isFile()) {
             const albumTitle = track.album?.title || 'Unknown Album';
             const fileNameInZip = path.join(decodedName, albumTitle, path.basename(filePath));
@@ -84,14 +78,27 @@ export async function GET(
 
     archive.finalize();
 
-    // Set appropriate headers for download
-    const artistFileName = `${decodedName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
-    return new NextResponse(stream as any, { // Cast to any
-      headers: {
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${artistFileName}"`,
+    // Convert Node.js PassThrough stream to Web ReadableStream
+    const readableWebStream = new ReadableStream({
+      start(controller) {
+        passThrough.on('data', (chunk) => controller.enqueue(chunk));
+        passThrough.on('end', () => controller.close());
+        passThrough.on('error', (err) => controller.error(err));
       },
+      cancel() {
+        passThrough.destroy();
+      }
     });
+
+    // Set appropriate headers for download
+    const artistFileName = `${decodedName.replace(/[^a-z0-9\s]/gi, '_').toLowerCase()}.zip`;
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/zip');
+    headers.set('Content-Disposition', `attachment; filename="${artistFileName}"`);
+    headers.set('Transfer-Encoding', 'chunked'); // Important for streaming downloads
+
+    // @ts-ignore: Next.js Stream/Response type compatibility
+    return new NextResponse(readableWebStream, { headers });
 
   } catch (error) {
     console.error('Artist download error:', error);

@@ -4,10 +4,11 @@ import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
 import { auth } from '@/auth';
+import stream from 'stream'; // Import stream
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } } // This line changed
+  { params }: { params: { id: string } }
 ) {
   // 1. Authenticate user
   const session = await auth();
@@ -16,7 +17,7 @@ export async function GET(
   }
 
   try {
-    const { id } = params; // No await here
+    const { id } = params;
 
     // 2. Fetch album details and associated tracks
     const album = await prisma.album.findUnique({
@@ -34,23 +35,19 @@ export async function GET(
 
     const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
 
-    // Create a new archiver instance
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
     });
 
-    // Pipe archive data to a temporary stream or directly to response
-    // For Next.js, we need to convert it to a ReadableStream or similar
-    const stream = new ReadableStream({
-      start(controller) {
-        archive.on('data', (chunk) => controller.enqueue(chunk));
-        archive.on('end', () => controller.close());
-        archive.on('error', (err) => controller.error(err));
-      }
-    });
+    const passThrough = new stream.PassThrough();
+    archive.pipe(passThrough);
 
     // Add tracks to the archive
     for (const track of album.tracks) {
+      if (!track.fileUrl) {
+        console.warn(`Track ${track.title} has no fileUrl. Skipping.`);
+        continue;
+      }
       const filePath = path.join(musicDir, track.fileUrl);
 
       // Security check: Ensure we don't traverse up
@@ -60,8 +57,9 @@ export async function GET(
       }
 
       try {
-        const fileStat = fs.statSync(filePath); // Use sync for stat in loop or refactor
+        const fileStat = fs.statSync(filePath);
         if (fileStat.isFile()) {
+            // Construct a meaningful path inside the zip
             const fileNameInZip = path.join(album.artist, album.title, path.basename(filePath));
             archive.file(filePath, { name: fileNameInZip });
         }
@@ -76,14 +74,27 @@ export async function GET(
 
     archive.finalize();
 
-    // Set appropriate headers for download
-    const albumFileName = `${album.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
-    return new NextResponse(stream as any, { // Cast to any
-      headers: {
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${albumFileName}"`,
+    // Convert Node.js PassThrough stream to Web ReadableStream
+    const readableWebStream = new ReadableStream({
+      start(controller) {
+        passThrough.on('data', (chunk) => controller.enqueue(chunk));
+        passThrough.on('end', () => controller.close());
+        passThrough.on('error', (err) => controller.error(err));
       },
+      cancel() {
+        passThrough.destroy();
+      }
     });
+
+    // Set appropriate headers for download
+    const albumFileName = `${album.title.replace(/[^a-z0-9\s]/gi, '_').toLowerCase()}.zip`;
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/zip');
+    headers.set('Content-Disposition', `attachment; filename="${albumFileName}"`);
+    headers.set('Transfer-Encoding', 'chunked'); // Important for streaming downloads
+
+    // @ts-ignore: Next.js Stream/Response type compatibility
+    return new NextResponse(readableWebStream, { headers });
 
   } catch (error) {
     console.error('Album download error:', error);
