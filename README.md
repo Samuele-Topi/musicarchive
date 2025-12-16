@@ -9,10 +9,11 @@ Built with the modern web stack: Next.js 🚀, Tailwind CSS ✨, and Prisma 🐘
 - **📂 Automatic Background Sync**: The app watches your `public/music` folder in real-time. Just drop your files, and they appear in the library instantly!
 - **⬆️ Effortless Uploads**: Drag & drop MP3 files via the UI, or manage the folder directly.
 - **🖼️ Rich Metadata & Covers**: All album cover art and track details are read directly from your MP3s' ID3 tags.
+- **✏️ Metadata Editor**: Fix incorrect tags directly in the app (Admin only).
 - **📦 Smart Downloads**: Download full albums or artist discographies as ZIP files, or grab individual tracks with ease.
 - **🌐 Intuitive Browsing**: Explore your collection in a gorgeous album grid, or switch to detailed track and artist views.
 - **▶️ Seamless Playback**: A persistent global player with queue management keeps the music flowing.
-- **🔍 Quick Search**: Find your favorite tunes by artist, album, or track name in an instant.
+- **🔍 Advanced Search & Filtering**: Filter your library by **Genre**, **Year**, or keyword to find exactly what you want.
 
 ## 🚀 Getting Started
 
@@ -49,6 +50,14 @@ Setting up your personal music sanctuary is easy!
 ### Synchronizing Your Library
 -   **Automatic**: The app now monitors your music folder for changes. Add or remove files, and the library updates automatically.
 -   **Manual**: You can still click the **Sync** button (🔄 icon) next to the search bar to force a rescan if needed.
+
+### Browsing & Filtering
+-   **Search**: Type in the search bar to filter by artist, album, or track name.
+-   **Advanced Filters**: Click the **Filter icon** next to the search bar to filter by **Genre** or **Year**.
+
+### Editing Metadata
+-   **Authenticated Users** can edit track details.
+-   Hover over a track and click the **Edit icon** (pencil) to modify the Title, Artist, Genre, or Track Number.
 
 ### Uploading New Tracks
 1.  Navigate to the dedicated `/upload` page.
