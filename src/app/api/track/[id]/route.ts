@@ -13,6 +13,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const deleteFiles = request.nextUrl.searchParams.get('deleteFiles') === 'true';
+
   try {
     const { id } = await params;
 
@@ -24,12 +26,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Track not found' }, { status: 404 });
     }
 
-    // Delete file from filesystem
-    const filePath = path.join(process.cwd(), 'public', track.fileUrl);
-    try {
-        await unlink(filePath);
-    } catch (e) {
-        console.warn("File deletion failed, might not exist:", filePath);
+    // Delete file from filesystem ONLY if requested
+    if (deleteFiles) {
+        const filePath = path.join(process.cwd(), 'public', track.fileUrl);
+        try {
+            await unlink(filePath);
+        } catch (e) {
+            console.warn("File deletion failed, might not exist:", filePath);
+        }
     }
 
     // Delete from DB
@@ -44,7 +48,11 @@ export async function DELETE(
         });
         if (remainingTracks === 0) {
              const album = await prisma.album.findUnique({ where: { id: track.albumId } });
-             if (album && album.coverUrl) {
+             // We generally delete the album entry if it's empty, but maybe not the cover file unless specified?
+             // Since cover is usually shared or dynamic, deleting the *entry* is safe.
+             // If we want to delete cover file, we should only do it if deleteFiles is true AND it's a local upload.
+             
+             if (deleteFiles && album && album.coverUrl && !album.coverUrl.startsWith('/api')) {
                  const coverPath = path.join(process.cwd(), 'public', album.coverUrl);
                  try {
                     await unlink(coverPath);

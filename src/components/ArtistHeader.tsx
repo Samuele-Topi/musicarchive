@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { Camera, Loader2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 export default function ArtistHeader({ name, initialImageUrl, isAuthenticated, bio }: { name: string, initialImageUrl?: string | null, isAuthenticated: boolean, bio?: string | null }) {
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeletingDiscography, setIsDeletingDiscography] = useState(false);
   const router = useRouter();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,11 +38,9 @@ export default function ArtistHeader({ name, initialImageUrl, isAuthenticated, b
     }
   };
 
-  const handleDeleteDiscography = async () => {
-    if (!confirm(`Are you sure you want to delete ALL albums and tracks by ${name}? This cannot be undone.`)) return;
-
+  const handleConfirmDelete = async (deleteFiles: boolean) => {
     try {
-        const res = await fetch(`/api/artist/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        const res = await fetch(`/api/artist/${encodeURIComponent(name)}?deleteFiles=${deleteFiles}`, { method: 'DELETE' });
         if (res.ok) {
             const data = await res.json();
             alert(data.message);
@@ -85,7 +85,7 @@ export default function ArtistHeader({ name, initialImageUrl, isAuthenticated, b
         
         {isAuthenticated && (
              <button
-                onClick={handleDeleteDiscography}
+                onClick={() => setIsDeletingDiscography(true)}
                 className="mt-4 flex items-center gap-2 text-red-500 hover:text-red-600 transition text-sm font-medium hover:underline mx-auto md:mx-0"
                 title="Delete Entire Discography"
              >
@@ -93,6 +93,14 @@ export default function ArtistHeader({ name, initialImageUrl, isAuthenticated, b
              </button>
          )}
       </div>
+
+      <DeleteConfirmModal 
+         isOpen={isDeletingDiscography}
+         onClose={() => setIsDeletingDiscography(false)}
+         onConfirm={handleConfirmDelete}
+         title="Delete Discography"
+         message={`Are you sure you want to delete ALL albums and tracks by ${name}?`}
+      />
     </div>
   );
 }

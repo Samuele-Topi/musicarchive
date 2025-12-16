@@ -6,6 +6,7 @@ import { formatTime, cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import EditTrackModal from './EditTrackModal';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 export default function TrackItem({ 
     track, 
@@ -23,6 +24,7 @@ export default function TrackItem({
   const { playTrack, setQueue, currentTrack, isPlaying, togglePlay } = usePlayer();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isActive = currentTrack?.id === track.id;
 
@@ -40,11 +42,14 @@ export default function TrackItem({
     playTrack(track);
   };
 
-  const handleDeleteTrack = async (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!confirm("Are you sure you want to delete this track?")) return;
+      setIsDeleting(true);
+  };
+
+  const handleConfirmDelete = async (deleteFiles: boolean) => {
       try {
-          await fetch(`/api/track/${track.id}`, { method: 'DELETE' });
+          await fetch(`/api/track/${track.id}?deleteFiles=${deleteFiles}`, { method: 'DELETE' });
           router.refresh();
       } catch (err) {
           alert("Failed to delete track");
@@ -149,7 +154,7 @@ export default function TrackItem({
                 <Edit2 size={16} />
                 </button>
                 <button 
-                onClick={handleDeleteTrack}
+                onClick={handleDeleteClick}
                 className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
                 title="Delete Track"
                 >
@@ -168,6 +173,13 @@ export default function TrackItem({
         }} 
         albums={albums}
         artists={artists}
+    />
+    <DeleteConfirmModal
+        isOpen={isDeleting}
+        onClose={() => setIsDeleting(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Track"
+        message={`Are you sure you want to delete "${track.title}"?`}
     />
     </>
   );

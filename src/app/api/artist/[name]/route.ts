@@ -13,6 +13,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const deleteFiles = request.nextUrl.searchParams.get('deleteFiles') === 'true';
+
   try {
     const { name } = await params;
     const decodedName = decodeURIComponent(name);
@@ -34,14 +36,16 @@ export async function DELETE(
     let deletedCount = 0;
 
     for (const album of albums) {
-        // Delete track files
-        for (const track of album.tracks) {
-            if (track.fileUrl) {
-                const filePath = getMusicFilePath(track.fileUrl);
-                try {
-                    await unlink(filePath);
-                } catch (e) {
-                    console.warn(`Failed to delete file: ${filePath}`);
+        // Delete track files if requested
+        if (deleteFiles) {
+            for (const track of album.tracks) {
+                if (track.fileUrl) {
+                    const filePath = getMusicFilePath(track.fileUrl);
+                    try {
+                        await unlink(filePath);
+                    } catch (e) {
+                        console.warn(`Failed to delete file: ${filePath}`);
+                    }
                 }
             }
         }
