@@ -34,7 +34,7 @@ export default function LibraryView({ albums, artistInfos = [], isAuthenticated 
       const data = await res.json();
       if (res.ok) {
         router.refresh();
-        alert(`Sync complete! Added ${data.added} new tracks.`);
+        alert(`Sync complete!\nAdded: ${data.added}\nRemoved: ${data.pruned || 0}`);
       } else {
         alert('Sync failed');
       }

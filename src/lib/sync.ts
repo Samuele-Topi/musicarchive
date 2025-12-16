@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import * as mm from 'music-metadata';
 import chokidar from 'chokidar';
+import { getMusicFilePath } from '@/lib/serverUtils';
 
 // Helper to get all files recursively
 async function getFiles(dir: string): Promise<string[]> {
@@ -14,6 +15,47 @@ async function getFiles(dir: string): Promise<string[]> {
   return Array.prototype.concat(...files);
 }
 
+// Prune tracks that no longer exist on disk
+async function pruneLibrary() {
+    console.log('[Sync] Starting library cleanup (pruning)...');
+    const allTracks = await prisma.track.findMany({
+        select: { id: true, fileUrl: true, title: true }
+    });
+
+    let removedCount = 0;
+    for (const track of allTracks) {
+        // Use the helper to resolve the absolute path correctly
+        const fullPath = getMusicFilePath(track.fileUrl);
+        
+        if (!fs.existsSync(fullPath)) {
+            try {
+                await prisma.track.delete({ where: { id: track.id } });
+                console.log(`[Sync] Pruned missing track: ${track.title} (${track.fileUrl})`);
+                removedCount++;
+            } catch (e) {
+                console.error(`[Sync] Failed to prune track ${track.id}`, e);
+            }
+        }
+    }
+
+    if (removedCount > 0) {
+        // Cleanup empty albums
+        const albums = await prisma.album.findMany({
+            include: { _count: { select: { tracks: true } } }
+        });
+        
+        for (const album of albums) {
+            if (album._count.tracks === 0) {
+                 await prisma.album.delete({ where: { id: album.id } });
+                 console.log(`[Sync] Pruned empty album: ${album.title}`);
+            }
+        }
+    }
+    
+    console.log(`[Sync] Pruning complete. Removed ${removedCount} missing tracks.`);
+    return removedCount;
+}
+
 export async function syncLibrary() {
   const musicDir = process.env.MUSIC_DIR || path.join(process.cwd(), 'public', 'music');
   
@@ -23,13 +65,16 @@ export async function syncLibrary() {
       return { added: 0, errors: [] };
   }
 
+  // 1. Prune missing files first
+  const prunedCount = await pruneLibrary();
+
   console.log(`[Sync] Scanning music directory: ${musicDir}`);
 
-  // 1. Get all files recursively
+  // 2. Get all files recursively
   const allFiles = await getFiles(musicDir);
   const mp3Files = allFiles.filter(f => path.extname(f).toLowerCase() === '.mp3');
 
-  // 2. Get existing file URLs from DB
+  // 3. Get existing file URLs from DB
   const existingTracks = await prisma.track.findMany({
     select: { fileUrl: true }
   });
@@ -44,6 +89,7 @@ export async function syncLibrary() {
       // Ensure forward slashes for URL
       const fileUrl = `/music${relativePath.split(path.sep).join('/')}`;
 
+      // Check if already exists (case sensitive check is standard, but Pruning handles changes)
       if (existingSet.has(fileUrl)) {
           continue;
       }
@@ -125,6 +171,7 @@ export async function syncLibrary() {
 
   return { 
       added: addedCount, 
+      pruned: prunedCount,
       totalFound: mp3Files.length,
       errors: errors.length > 0 ? errors : undefined 
   };
