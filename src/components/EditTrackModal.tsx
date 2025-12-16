@@ -3,20 +3,25 @@
 import { useState } from 'react';
 import { Track } from '@prisma/client';
 import { X, Save, Loader2 } from 'lucide-react';
+import Combobox from './Combobox';
 
 interface EditTrackModalProps {
   track: Track;
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedTrack: Track) => void;
+  albums?: { value: string; label: string }[];
+  artists?: { value: string; label: string }[];
 }
 
-export default function EditTrackModal({ track, isOpen, onClose, onSave }: EditTrackModalProps) {
+export default function EditTrackModal({ track, isOpen, onClose, onSave, albums = [], artists = [] }: EditTrackModalProps) {
   const [formData, setFormData] = useState({
     title: track.title,
     artist: track.artist || '',
     genre: track.genre || '',
     trackNumber: track.trackNumber || 0,
+    albumId: track.albumId || '',
+    newAlbumTitle: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -24,6 +29,25 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave }: EditT
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Artist Combobox Handlers
+  const handleArtistChange = (value: string) => {
+      // Check if value matches an existing artist ID or Name? 
+      // Our artists list has value=name usually for this app's logic, or value=id?
+      // In LibraryView, allArtists is just a string array. 
+      // We'll assume value is the Artist Name.
+      setFormData({ ...formData, artist: value });
+  };
+
+  // Album Combobox Handlers
+  const handleAlbumChange = (value: string) => {
+      // value is album ID
+      setFormData({ ...formData, albumId: value, newAlbumTitle: '' });
+  };
+
+  const handleCreateAlbum = (value: string) => {
+      setFormData({ ...formData, albumId: '', newAlbumTitle: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +75,7 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave }: EditT
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-zinc-200 dark:border-zinc-800">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-md overflow-visible border border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
           <h3 className="font-semibold text-lg">Edit Metadata</h3>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded">
@@ -74,13 +98,31 @@ export default function EditTrackModal({ track, isOpen, onClose, onSave }: EditT
           
           <div>
             <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">Artist</label>
-            <input 
-              type="text" 
-              name="artist"
-              value={formData.artist} 
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            <Combobox 
+                options={artists}
+                value={formData.artist}
+                onChange={handleArtistChange}
+                onCreate={handleArtistChange} // For artist, creating is just setting the text
+                placeholder="Select or enter artist..."
             />
+          </div>
+
+          <div>
+             <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">Album</label>
+             <Combobox 
+                options={albums}
+                value={formData.albumId || formData.newAlbumTitle} // Display ID? No, Combobox needs value to match option.value.
+                // If we have a newAlbumTitle, we want to show that. 
+                // But Combobox logic matches 'value' to 'option.value'. 
+                // We might need to handle this display logic in Combobox or here.
+                // For now, if we have an ID, we pass it. The Combobox will show the label.
+                // If we have a new Title, we pass it? It won't match any option. 
+                // My Combobox implementation displays `selectedOption.label` OR `value`. 
+                // So passing newAlbumTitle as value works!
+                onChange={handleAlbumChange}
+                onCreate={handleCreateAlbum}
+                placeholder="Select or create album..."
+             />
           </div>
 
           <div className="flex gap-4">

@@ -75,7 +75,36 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, artist, genre, trackNumber } = body;
+    const { title, artist, genre, trackNumber, albumId, newAlbumTitle } = body;
+
+    let finalAlbumId = albumId;
+
+    // Handle New Album Creation
+    if (newAlbumTitle) {
+        // Assume album artist is the same as the track artist
+        const albumArtist = artist || "Unknown Artist";
+        
+        // Check if exists first to avoid duplicates
+        let album = await prisma.album.findFirst({
+            where: { title: newAlbumTitle, artist: albumArtist }
+        });
+
+        if (!album) {
+            album = await prisma.album.create({
+                data: {
+                    title: newAlbumTitle,
+                    artist: albumArtist,
+                    year: new Date().getFullYear(), // Default to current year or maybe pass year in body?
+                }
+            });
+            // Update cover placeholder
+            await prisma.album.update({
+                where: { id: album.id },
+                data: { coverUrl: `/api/cover/album/${album.id}` }
+            });
+        }
+        finalAlbumId = album.id;
+    }
 
     const track = await prisma.track.update({
       where: { id },
@@ -84,6 +113,7 @@ export async function PUT(
         artist,
         genre,
         trackNumber: trackNumber ? parseInt(trackNumber) : undefined,
+        albumId: finalAlbumId,
       },
     });
 

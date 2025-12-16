@@ -68,11 +68,20 @@ export default function LibraryView({ albums, artistInfos = [], isAuthenticated 
     })));
   }, [albums]);
 
-  // Unique Artists
+  // Unique Artists (using the main Album Artist for consistency in grouping)
   const allArtists = useMemo(() => {
     const artists = new Set(albums.map(a => a.artist));
     return Array.from(artists).sort();
   }, [albums]);
+
+  // Options for Metadata Editor
+  const albumOptions = useMemo(() => {
+      return albums.map(a => ({ value: a.id, label: a.title, subLabel: a.artist }));
+  }, [albums]);
+
+  const artistOptions = useMemo(() => {
+      return allArtists.map(a => ({ value: a, label: a }));
+  }, [allArtists]);
 
   // Unique Genres
   const allGenres = useMemo(() => {
@@ -315,6 +324,8 @@ export default function LibraryView({ albums, artistInfos = [], isAuthenticated 
                  track={track} 
                  context={filteredTracks}
                  isAuthenticated={isAuthenticated} 
+                 albums={albumOptions}
+                 artists={artistOptions}
                />
              ))}
              {filteredTracks.length === 0 && (

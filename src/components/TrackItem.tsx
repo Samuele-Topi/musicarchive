@@ -7,7 +7,19 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import EditTrackModal from './EditTrackModal';
 
-export default function TrackItem({ track, context, isAuthenticated = false }: { track: any, context?: any[], isAuthenticated?: boolean }) {
+export default function TrackItem({ 
+    track, 
+    context, 
+    isAuthenticated = false,
+    albums,
+    artists 
+}: { 
+    track: any, 
+    context?: any[], 
+    isAuthenticated?: boolean,
+    albums?: { value: string; label: string; subLabel?: string }[],
+    artists?: { value: string; label: string }[]
+}) {
   const { playTrack, setQueue, currentTrack, isPlaying, togglePlay } = usePlayer();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -149,6 +161,8 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
         onSave={(updated) => {
             router.refresh();
         }} 
+        albums={albums}
+        artists={artists}
     />
     </>
   );
