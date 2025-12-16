@@ -75,16 +75,14 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
                    <span>{trackCount} songs,</span>
                    <span className="opacity-75">{formatTime(totalDuration)}</span>
                 </div>
-                {isAuthenticated && (
-                  <a 
-                    href={`/api/download/album/${album.id}`}
-                    download
-                    className="flex items-center gap-2 hover:underline hover:text-black dark:hover:text-white transition"
-                    title="Download Album"
-                  >
-                    <Download size={16} /> Download Album
-                  </a>
-                )}
+                <a 
+                  href={`/api/download/album/${album.id}`}
+                  download
+                  className="flex items-center gap-2 hover:underline hover:text-black dark:hover:text-white transition"
+                  title="Download Album"
+                >
+                  <Download size={16} /> Download Album
+                </a>
              </div>
           </div>
        </div>

@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
-import { auth } from '@/auth';
 import stream from 'stream'; // Import stream
 import { getMusicFilePath } from '@/lib/serverUtils';
 
@@ -11,12 +10,6 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { name: string } }
 ) {
-  // 1. Authenticate user
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const { name } = await params; // Await params here
     const decodedName = decodeURIComponent(name);

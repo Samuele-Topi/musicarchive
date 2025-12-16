@@ -45,16 +45,14 @@ export default async function ArtistPage({ params }: { params: Promise<{ name: s
         isAuthenticated={isAuthenticated} 
       />
 
-      {isAuthenticated && (
-        <a 
-          href={`/api/download/artist/${encodeURIComponent(decodedName)}`}
-          download
-          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:underline hover:text-black dark:hover:text-white transition mb-8"
-          title="Download All Artist Tracks"
-        >
-          <Download size={16} /> Download All Tracks
-        </a>
-      )}
+      <a 
+        href={`/api/download/artist/${encodeURIComponent(decodedName)}`}
+        download
+        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:underline hover:text-black dark:hover:text-white transition mb-8"
+        title="Download All Artist Tracks"
+      >
+        <Download size={16} /> Download All Tracks
+      </a>
 
       <h2 className="text-2xl font-bold mb-4">Tracks</h2>
       <div className="space-y-1">

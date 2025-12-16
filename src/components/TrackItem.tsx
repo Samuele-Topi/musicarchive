@@ -95,24 +95,22 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
           <div className="text-sm text-zinc-400 tabular-nums">
             {formatTime(track.duration || 0)}
           </div>
+          <a 
+            href={`/api/download/track/${track.id}`}
+            download
+            className="p-2 text-zinc-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition"
+            title="Download Track"
+          >
+            <Download size={16} />
+          </a>
           {isAuthenticated && (
-            <>
-              <a 
-                href={`/api/download/track/${track.id}`}
-                download
-                className="p-2 text-zinc-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition"
-                title="Download Track"
-              >
-                <Download size={16} />
-              </a>
-              <button 
-                onClick={handleDeleteTrack}
-                className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-                title="Delete Track"
-              >
-                <Trash2 size={16} />
-              </button>
-            </>
+            <button 
+              onClick={handleDeleteTrack}
+              className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+              title="Delete Track"
+            >
+              <Trash2 size={16} />
+            </button>
           )}
       </div>
     </div>

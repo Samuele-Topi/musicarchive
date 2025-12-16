@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import fs from 'fs'; // Use fs directly for createReadStream
 import path from 'path';
 import { promisify } from 'util'; // Keep promisify for fs.stat
-import { auth } from '@/auth';
 import { getMusicFilePath } from '@/lib/serverUtils';
 
 const stat = promisify(fs.stat);
@@ -29,12 +28,6 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // 1. Authenticate user
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const { id } = await params; // Await params here
 
