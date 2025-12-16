@@ -8,7 +8,7 @@ Built with the modern web stack: Next.js 🚀, Tailwind CSS ✨, and Prisma 🐘
 
 - **📂 Smart Library Sync**: Automatically scans your local `public/music` folder and populates your database. No more manual track entry!
 - **⬆️ Effortless Uploads**: Drag & drop MP3 files, and watch them organize themselves into `public/music/{Artist}/{Album}/`.
-- **🖼️ Rich Metadata & Dynamic Covers**: All cover art and track details are read directly from your MP3s' ID3 tags. Beautifully displayed, no extra files!
+- **🖼️ Rich Metadata & Covers**: All album cover art and track details are read directly from your MP3s' ID3 tags. Artist images can be manually uploaded. Beautifully displayed, no extra files!
 - **🌐 Intuitive Browsing**: Explore your collection in a gorgeous album grid, or switch to detailed track and artist views.
 - **▶️ Seamless Playback**: A persistent global player with queue management keeps the music flowing.
 - **🔍 Quick Search**: Find your favorite tunes by artist, album, or track name in an instant.
@@ -56,8 +56,8 @@ Setting up your personal music sanctuary is easy!
 2.  **Authenticate**: Log in to upload new files.
 3.  Simply drag and drop your MP3s. They will be automatically organized and stored.
 
-### Managing Artist Images
--   **Authenticated users** can upload artist images directly from the artist's page by hovering over the placeholder/existing image and clicking the camera icon.
+### Managing Artist Images (Manual Upload)
+-   Artist images are not automatically fetched. **Authenticated users** can upload artist images directly from the artist's page by hovering over the placeholder/existing image and clicking the camera icon.
 
 ## 🏗️ Architecture Under the Hood
 

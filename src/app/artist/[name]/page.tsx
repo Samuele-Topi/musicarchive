@@ -5,23 +5,6 @@ import LibraryView from '@/components/LibraryView';
 import { formatTime } from '@/lib/utils';
 import TrackItem from '@/components/TrackItem';
 import { auth } from '@/auth';
-import { searchArtistOnGenius } from '@/lib/genius';
-import path from 'path';
-import fs from 'fs';
-import { writeFile } from 'fs/promises';
-
-async function downloadImage(url: string, destPath: string) {
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return false;
-        const buffer = Buffer.from(await res.arrayBuffer());
-        await writeFile(destPath, buffer);
-        return true;
-    } catch (e) {
-        console.error(`Failed to download image from ${url}`, e);
-        return false;
-    }
-}
 
 export default async function ArtistPage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
@@ -31,50 +14,6 @@ export default async function ArtistPage({ params }: { params: Promise<{ name: s
   let artistInfo = await prisma.artistInfo.findUnique({
     where: { name: decodedName }
   });
-
-  // Auto-fetch from Genius if missing info
-  if (!artistInfo || !artistInfo.imageUrl || !artistInfo.bio) {
-      try {
-          const geniusData = await searchArtistOnGenius(decodedName);
-          if (geniusData) {
-              let imageUrl = geniusData.imageUrl;
-              
-              // Try to download to local folder if exists
-              const musicDir = process.env.MUSIC_DIR;
-              if (musicDir && geniusData.imageUrl) {
-                  const artistDir = path.join(musicDir, decodedName);
-                  if (fs.existsSync(artistDir)) {
-                       const ext = path.extname(geniusData.imageUrl) || '.jpg';
-                       const imageFileName = `artist${ext}`;
-                       const localImagePath = path.join(artistDir, imageFileName);
-                       const success = await downloadImage(geniusData.imageUrl, localImagePath);
-                       if (success) {
-                           // Use the served route URL for the image
-                           // Route: src/app/music/[...path]/route.ts
-                           // URL: /music/ArtistName/artist.jpg
-                           imageUrl = `/music/${encodeURIComponent(decodedName)}/${imageFileName}`;
-                       }
-                  }
-              }
-
-              // Update DB
-              artistInfo = await prisma.artistInfo.upsert({
-                  where: { name: decodedName },
-                  update: { 
-                      imageUrl: imageUrl || artistInfo?.imageUrl,
-                      bio: geniusData.bio || artistInfo?.bio
-                  },
-                  create: { 
-                      name: decodedName, 
-                      imageUrl: imageUrl, 
-                      bio: geniusData.bio 
-                  }
-              });
-          }
-      } catch (error) {
-          console.error("Auto-fetch error:", error);
-      }
-  }
 
   // Fetch Tracks (Main artist OR Featured)
   const tracks = await prisma.track.findMany({
