@@ -66,6 +66,8 @@ export async function syncLibrary() {
   }
 
   // 1. Prune missing files first
+  // This ensures a 1:1 mirror with the filesystem by removing "ghost" entries
+  // (files that were moved, renamed, or deleted) before we scan for new ones.
   const prunedCount = await pruneLibrary();
 
   console.log(`[Sync] Scanning music directory: ${musicDir}`);
