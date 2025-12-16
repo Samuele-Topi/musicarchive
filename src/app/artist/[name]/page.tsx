@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import ArtistHeader from '@/components/ArtistHeader';
-import { Play } from 'lucide-react';
+import { Play, Download } from 'lucide-react';
 import LibraryView from '@/components/LibraryView'; 
 import { formatTime } from '@/lib/utils';
 import TrackItem from '@/components/TrackItem';
@@ -44,6 +44,17 @@ export default async function ArtistPage({ params }: { params: Promise<{ name: s
         bio={artistInfo?.bio}
         isAuthenticated={isAuthenticated} 
       />
+
+      {isAuthenticated && (
+        <a 
+          href={`/api/download/artist/${encodeURIComponent(decodedName)}`}
+          download
+          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:underline hover:text-black dark:hover:text-white transition mb-8"
+          title="Download All Artist Tracks"
+        >
+          <Download size={16} /> Download All Tracks
+        </a>
+      )}
 
       <h2 className="text-2xl font-bold mb-4">Tracks</h2>
       <div className="space-y-1">

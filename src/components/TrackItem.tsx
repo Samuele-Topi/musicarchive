@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Pause, Trash2, BarChart2 } from 'lucide-react';
+import { Play, Pause, Trash2, BarChart2, Download } from 'lucide-react';
 import { usePlayer } from './PlayerProvider';
 import { formatTime, cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -96,13 +96,23 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
             {formatTime(track.duration || 0)}
           </div>
           {isAuthenticated && (
-            <button 
-              onClick={handleDeleteTrack}
-              className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-              title="Delete Track"
-            >
-              <Trash2 size={16} />
-            </button>
+            <>
+              <a 
+                href={`/api/download/track/${track.id}`}
+                download
+                className="p-2 text-zinc-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition"
+                title="Download Track"
+              >
+                <Download size={16} />
+              </a>
+              <button 
+                onClick={handleDeleteTrack}
+                className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                title="Delete Track"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
           )}
       </div>
     </div>
