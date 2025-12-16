@@ -46,7 +46,8 @@ export async function GET(
         const fileStat = fs.statSync(filePath);
         if (fileStat.isFile()) {
             // Construct a meaningful path inside the zip
-            const fileNameInZip = path.join(album.artist, album.title, path.basename(filePath));
+            // User requested to remove artist folder: just Album/Song.mp3
+            const fileNameInZip = path.join(album.title, path.basename(filePath));
             archive.file(filePath, { name: fileNameInZip });
         }
       } catch (fileError: any) {
@@ -73,7 +74,9 @@ export async function GET(
     });
 
     // Set appropriate headers for download
-    const albumFileName = `${album.title.replace(/[^a-z0-9\s]/gi, '_').toLowerCase()}.zip`;
+    // Sanitize filename: alphanumeric only, spaces to underscores, no double underscores
+    const sanitizedTitle = album.title.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').toLowerCase();
+    const albumFileName = `${sanitizedTitle}.zip`;
     const headers = new Headers();
     headers.set('Content-Type', 'application/zip');
     headers.set('Content-Disposition', `attachment; filename="${albumFileName}"`);
