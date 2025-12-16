@@ -3,9 +3,15 @@ import { prisma } from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
 import { writeFile } from 'fs/promises';
+import { auth } from '@/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const artistName = formData.get('artistName') as string;
@@ -19,7 +25,13 @@ export async function POST(req: NextRequest) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const fileName = `${artistName}-${Date.now()}.jpg`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    // Sanitize artist name for filename
+    const safeArtistName = artistName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const timestamp = Date.now();
+    // Use original extension if available, default to .jpg
+    const ext = file.name ? path.extname(file.name) : '.jpg';
+    const fileName = `${safeArtistName}-${timestamp}${ext}`;
+    
     const filePath = path.join(uploadDir, fileName);
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(filePath, buffer);
