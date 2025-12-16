@@ -17,7 +17,7 @@ export async function GET(
   }
 
   try {
-    const { name } = params;
+    const { name } = await params; // Await params here
     const decodedName = decodeURIComponent(name);
 
     // 2. Fetch all tracks for the artist

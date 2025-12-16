@@ -35,7 +35,7 @@ export async function GET(
   }
 
   try {
-    const { id } = params;
+    const { id } = await params; // Await params here
 
     // 2. Fetch track details
     const track = await prisma.track.findUnique({
@@ -62,7 +62,16 @@ export async function GET(
     }
 
     const fileName = path.basename(filePath);
+    const ext = path.extname(filePath).toLowerCase(); // Get extension for logging
     const contentType = getContentType(filePath);
+
+    console.log('--- Single Track Download Debug ---');
+    console.log('filePath:', filePath);
+    console.log('fileName:', fileName);
+    console.log('ext:', ext);
+    console.log('contentType:', contentType);
+    console.log('-----------------------------------');
+
     const fileStream = fs.createReadStream(filePath);
 
     const readableWebStream = new ReadableStream({

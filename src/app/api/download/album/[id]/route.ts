@@ -17,7 +17,7 @@ export async function GET(
   }
 
   try {
-    const { id } = params;
+    const { id } = await params; // Await params here
 
     // 2. Fetch album details and associated tracks
     const album = await prisma.album.findUnique({
