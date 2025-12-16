@@ -24,6 +24,7 @@ model Track {
   id          String   @id @default(uuid())
   title       String
   artist      String?  // Specific artist for this track (e.g. including features)
+  genre       String?
   fileUrl     String
   duration    Float?
   trackNumber Int?

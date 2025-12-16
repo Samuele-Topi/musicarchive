@@ -62,3 +62,34 @@ export async function DELETE(
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
   }
 }
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { title, artist, genre, trackNumber } = body;
+
+    const track = await prisma.track.update({
+      where: { id },
+      data: {
+        title,
+        artist,
+        genre,
+        trackNumber: trackNumber ? parseInt(trackNumber) : undefined,
+      },
+    });
+
+    return NextResponse.json(track);
+  } catch (error) {
+    console.error('Update error:', error);
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+  }
+}

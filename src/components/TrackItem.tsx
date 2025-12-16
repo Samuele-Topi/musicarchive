@@ -1,13 +1,16 @@
 "use client";
 
-import { Play, Pause, Trash2, BarChart2, Download } from 'lucide-react';
+import { Play, Pause, Trash2, BarChart2, Download, Edit2 } from 'lucide-react';
 import { usePlayer } from './PlayerProvider';
 import { formatTime, cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import EditTrackModal from './EditTrackModal';
 
 export default function TrackItem({ track, context, isAuthenticated = false }: { track: any, context?: any[], isAuthenticated?: boolean }) {
   const { playTrack, setQueue, currentTrack, isPlaying, togglePlay } = usePlayer();
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
 
   const isActive = currentTrack?.id === track.id;
 
@@ -36,7 +39,13 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
       }
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsEditing(true);
+  };
+
   return (
+    <>
     <div 
       className={cn(
         "group flex items-center gap-4 p-3 rounded-lg transition border",
@@ -89,7 +98,17 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
         <h4 className={cn("truncate transition", isActive ? "font-bold" : "font-medium dark:text-zinc-200")}>
           {track.title}
         </h4>
-        <p className="text-sm text-zinc-500 truncate">{track.artist} • {track.albumTitle}</p>
+        <div className="flex items-center gap-2 text-sm text-zinc-500 truncate">
+           <span>{track.artist}</span>
+           {track.genre && (
+               <>
+                 <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                 <span className="text-xs px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-full">{track.genre}</span>
+               </>
+           )}
+           <span className="text-zinc-300 dark:text-zinc-700">•</span>
+           <span>{track.albumTitle}</span>
+        </div>
       </div>
       <div className="flex items-center gap-4">
           <div className="text-sm text-zinc-400 tabular-nums">
@@ -104,15 +123,33 @@ export default function TrackItem({ track, context, isAuthenticated = false }: {
             <Download size={16} />
           </a>
           {isAuthenticated && (
-            <button 
-              onClick={handleDeleteTrack}
-              className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
-              title="Delete Track"
-            >
-              <Trash2 size={16} />
-            </button>
+            <>
+                <button 
+                onClick={handleEdit}
+                className="p-2 text-zinc-400 hover:text-green-500 opacity-0 group-hover:opacity-100 transition"
+                title="Edit Track"
+                >
+                <Edit2 size={16} />
+                </button>
+                <button 
+                onClick={handleDeleteTrack}
+                className="p-2 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                title="Delete Track"
+                >
+                <Trash2 size={16} />
+                </button>
+            </>
           )}
       </div>
     </div>
+    <EditTrackModal 
+        track={track} 
+        isOpen={isEditing} 
+        onClose={() => setIsEditing(false)} 
+        onSave={(updated) => {
+            router.refresh();
+        }} 
+    />
+    </>
   );
 }

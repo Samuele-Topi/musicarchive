@@ -60,6 +60,7 @@ export async function syncLibrary() {
           const year = common.year || new Date().getFullYear();
           const duration = format.duration || 0;
           const trackNumber = common.track.no || 0;
+          const genre = common.genre && common.genre.length > 0 ? common.genre[0] : null;
 
           const albumKey = `${mainArtist}|${albumName}`;
           let albumId = albumCache.get(albumKey);
@@ -91,6 +92,7 @@ export async function syncLibrary() {
               data: {
                   title,
                   artist: rawArtist,
+                  genre,
                   fileUrl,
                   duration,
                   trackNumber,
